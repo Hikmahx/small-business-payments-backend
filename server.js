@@ -1,25 +1,33 @@
 const express = require("express");
-const dotenv = require("dotenv");
 const connectDB = require("./config/db");
-const path = require("path");
 const cors = require("cors");
-
-dotenv.config({ path: "./config/config.env" });
+const businessRouter = require("./business/business.route")
+const authRouter = require("./auth/auth.router")
+const clientRouter = require("./client/client.route")
+const invoiceRouter = require("./invoice/invoice.route")
+const serviceRouter = require("./services/paystack.routers")
+require("dotenv").config()
 connectDB();
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT;
 app.use(express.json({ extended: false }));
 
 // CORS
 app.use(cors());
+// ROUTES
+app.use("/api/v1/business", businessRouter)
+app.use("/api/v1/auth", authRouter)
+app.use("/api/v1/client", clientRouter)
+app.use("/api/v1/invoice", invoiceRouter)
+app.use("/api/v1/service", serviceRouter)
 
 // ROUTES
 // app.use("/api/business", require("./routes/business.route"));
 // app.use("/api/client", require("./routes/client.route"));
 // app.use("/api/invoice", require("./routes/invoice.route"));
 
-app.get("/", (req) => {
+app.get("/", (req, res) => {
   console.log("Hello world");
   return res
     .status(200)

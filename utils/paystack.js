@@ -94,11 +94,7 @@ const verifyTransaction = async (req, res) => {
 
             response.on('end', async () => {
                 const responseData = JSON.parse(data);
-                // console.log({ responseData });
-                // Assuming invoiceId is available in your Paystack response
                 const ref = responseData.data.reference
-
-                // Extract payment status from Paystack response
                 const paymentStatus = responseData.data.status;
                 console.log({ paymentStatus });
                 if (paymentStatus === "success") {
@@ -118,9 +114,6 @@ const verifyTransaction = async (req, res) => {
                         { refrenceNumber: ref },
                         { $set: { status: "pending" } }
                     );
-
-                    // Additional logic if needed
-
                     return res.status(200).json(responseData);
                 } else if (paymentStatus === "declined" || paymentStatus === "abandoned") {
                     // Update paymentStatus in PaymentModel

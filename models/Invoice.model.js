@@ -9,13 +9,14 @@ const InvoiceSchema = new schema({
     },
     amount: { type: Number, required: true },
     dueDate: { type: Date, required: true },
-    isPaid: { type: Boolean, default: false },
+    status: { type: String,  enum : ["outstanding", "overdue", "paid"], default: "outstanding" },
     paymentHistory: [
         {
             paymentDate: { type: Date },
             paymentAmount: { type: Number },
         }
     ],
+    referenceNumber : { type : String},
     remarks : { type : String},
     created_at : {type : Date, default : new Date()}
 })

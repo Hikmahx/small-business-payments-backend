@@ -4,6 +4,9 @@ const globalMiddleware = require("../middlewares/authMiddleware")
 const router = express.Router()
 
 router.post("/create-invoice", globalMiddleware.BearerTokenBusiness, controller.CreateInvoice)
-router.get("/get-unpaid-invoice", globalMiddleware.BearerTokenClient, controller.getUnpaidInvoices)
+router.get("/outstanding", globalMiddleware.BearerTokenBusiness, controller.getOutstandingInvoices)
+router.get("/overdue", globalMiddleware.BearerTokenBusiness, controller.getOverdueInvoicePayment)
+router.get("/paid", globalMiddleware.BearerTokenBusiness, controller.getPaidInvoices)
+router.get("/all-money", globalMiddleware.BearerTokenBusiness, controller.getAllInvoice)
 
 module.exports = router

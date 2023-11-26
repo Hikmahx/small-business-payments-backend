@@ -1,7 +1,6 @@
 const https = require("https")
 const invoiceModel = require("../models/Invoice.model")
 const clientModel = require("../models/Client.model")
-const { updatePaymentStatus } = require("../payment/payment.controllers")
 const PaymentModel = require("../models/payment.model")
 
 const initializePayment = async (req, res) => {
@@ -45,6 +44,10 @@ const initializePayment = async (req, res) => {
                 const responseData = JSON.parse(data)
                 if (responseData && responseData.data && responseData.data.reference) {
                     const reference = responseData.data.reference;
+                    await invoiceModel.findOneAndUpdate(
+                        { _id: invoiceId },
+                        { $set: { referenceNumber: reference } }
+                    );
 
                     await PaymentModel.create({
                         invoiceId: invoiceId,
@@ -98,11 +101,24 @@ const verifyTransaction = async (req, res) => {
                 const paymentStatus = responseData.data.status;
                 console.log({ paymentStatus });
                 if (paymentStatus === "success") {
+                    const invoiceamt = await invoiceModel.findOne({ referenceNumber : ref})
+                    const amount = invoiceamt.amount
                     // Update paymentStatus in PaymentModel
                     await PaymentModel.findOneAndUpdate(
                         { refrenceNumber: ref },
-                        { $set: { status: "accepted" } },
-                        { new: true }
+                        { $set: { status: "accepted" } }
+                    );
+                    await invoiceModel.findOneAndUpdate(
+                        { referenceNumber: ref },
+                        {
+                            $push: {
+                                paymentHistory: {
+                                    paymentDate: new Date(),
+                                    paymentAmount: amount
+                                }
+                            },
+                            $set: { status: "paid" }
+                        },
                     );
                     return res.status(200).json(responseData);
                 } else if (paymentStatus === "pending") {
@@ -123,7 +139,6 @@ const verifyTransaction = async (req, res) => {
                     console.log("Unhandled payment status:", paymentStatus);
                     return res.status(500).json("An error occurred");
                 }
-                // return res.status(200).json(responseData);
             })
         }).on('error', error => {
             console.error(error)
@@ -134,34 +149,6 @@ const verifyTransaction = async (req, res) => {
             message: "An error occurred",
             data: error
         });
-    }
-}
-
-const chargeAuthorization = async (req, res) => {
-    try {
-        const authorization_code = req.params.authorization
-        const client = req.client._id
-        const invoice = await invoiceModel.findOne({ _id: invoiceId, clientId: client });
-        const clientSide = await clientModel.find({ _id: client })
-        const clientEmail = clientSide.length > 0 ? clientSide[0].clientEmail : null;
-        const amount = invoice.amount;
-
-        const params = JSON.stringify({
-            email: clientEmail,
-            amount: 100 * amount,
-        });
-        const options = {
-            hostname: 'api.paystack.co',
-            port: 443,
-            path: '/transaction/charge_authorization',
-            method: 'POST',
-            headers: {
-                Authorization: `Bearer ${process.env.TEST_SECRET_KEY}`,
-                'Content-Type': 'application/json'
-            }
-        }
-    } catch (error) {
-
     }
 }
 

@@ -6,6 +6,11 @@ const authRouter = require("./auth/auth.router")
 const clientRouter = require("./client/client.route")
 const invoiceRouter = require("./invoice/invoice.route")
 const serviceRouter = require("./services/paystack.routers")
+const schedule = require("node-schedule")
+const invoiceModel = require("./models/Invoice.model")
+const { triggerOverDueInvoiceNotification } = require("./utils/novu");
+const ClientModel = require("./models/Client.model");
+const BusinessOwnerModel = require("./models/Business.model");
 require("dotenv").config()
 connectDB();
 
@@ -22,11 +27,6 @@ app.use("/api/v1/client", clientRouter)
 app.use("/api/v1/invoice", invoiceRouter)
 app.use("/api/v1/service", serviceRouter)
 
-// ROUTES
-// app.use("/api/business", require("./routes/business.route"));
-// app.use("/api/client", require("./routes/client.route"));
-// app.use("/api/invoice", require("./routes/invoice.route"));
-
 app.get("/", (req, res) => {
   console.log("Hello world");
   return res
@@ -35,6 +35,42 @@ app.get("/", (req, res) => {
       message:
         "Hi there! This is a backend project for small business payment management. Check GitHub: https://github.com/Hikmahx/small-business-payments-backend for more info",
     });
+});
+
+schedule.scheduleJob("0 0 * * *", async () => {
+  console.log('Cron job running in the background.');
+
+  const overdueInvoices = await invoiceModel.find({
+    dueDate: { $lte: new Date() },
+    status: { $ne: 'overdue' }
+  });
+
+  // Update the status of overdue invoices sequentially
+  for (const invoice of overdueInvoices) {
+    try {
+      invoice.status = 'overdue';
+      await invoice.save();
+      console.log("Invoice saved");
+
+      const client = await ClientModel.findById(invoice.clientId);
+      const businessDetails = await BusinessOwnerModel.findOne({ _id: client.businessOwnerId })
+
+      await triggerOverDueInvoiceNotification(
+        client._id,
+        client.clientName,
+        invoice._id,
+        invoice.dueDate,
+        businessDetails.email,
+        businessDetails.company_name
+      );
+
+      console.log("Mail sent");
+    } catch (error) {
+      console.error("Error saving invoice:", error);
+    }
+  }
+
+  console.log('Invoice cron job executed.');
 });
 
 app.listen(PORT, () => console.log("This is listening on PORT: " + PORT));

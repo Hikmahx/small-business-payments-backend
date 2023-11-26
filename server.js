@@ -12,7 +12,7 @@ const { triggerOverDueInvoiceNotification } = require("./utils/novu");
 const ClientModel = require("./models/Client.model");
 const BusinessOwnerModel = require("./models/Business.model");
 require("dotenv").config()
-connectDB();
+connectDB.connect()
 
 const app = express();
 const PORT = process.env.PORT;

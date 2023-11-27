@@ -6,6 +6,9 @@
   "scripts": {
     "server": "nodemon server.js"
   },
+  "engines": {
+    "node": "20.10.0"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",

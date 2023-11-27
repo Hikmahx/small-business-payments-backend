@@ -8,5 +8,6 @@ router.get("/outstanding", globalMiddleware.BearerTokenBusiness, controller.getO
 router.get("/overdue", globalMiddleware.BearerTokenBusiness, controller.getOverdueInvoicePayment)
 router.get("/paid", globalMiddleware.BearerTokenBusiness, controller.getPaidInvoices)
 router.get("/all-money", globalMiddleware.BearerTokenBusiness, controller.getAllInvoice)
+router.get("/invoice-information", globalMiddleware.BearerTokenBusiness, controller.getAllPaidOutstandingOverdueInvoice)
 
 module.exports = router

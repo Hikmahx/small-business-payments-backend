@@ -1,4 +1,5 @@
 const businessModel = require("../models/Business.model")
+const clientModel = require("../models/Client.model")
 const { addSubscriberToNovu, triggerNotification } = require("../utils/novu")
 
 const createBusiness = async (req, res) => {
@@ -118,6 +119,8 @@ const getAllClientInformation = async (req, res) => {
         const business_client = req.user._id
         // fetches all client created by the business
         const found_business_client = await clientModel.find({ businessOwnerId: business_client })
+        const totalClients = found_business_client.length;
+        const totalActiveClients = found_business_client.filter(client => !client.deleted).length;
         if (!business_client) {
             return res.status(401).json({
                 status: false,
@@ -132,7 +135,9 @@ const getAllClientInformation = async (req, res) => {
         }
         return res.status(200).json({
             status: "success",
-            data: found_business_client
+            data: found_business_client,
+            total_value : totalClients,
+            totalActiveClients : totalActiveClients
         })
     } catch (error) {
         return res.status(422).json({

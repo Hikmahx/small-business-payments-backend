@@ -7,6 +7,10 @@ const InvoiceSchema = new schema({
         ref: "ClientSchema",
         required: true
     },
+    businessId: {
+        type: schema.ObjectId,
+        ref: "BusinessOwnerSchema"
+    },
     amount: { type: Number, required: true },
     dueDate: { type: Date, required: true },
     status: { type: String,  enum : ["outstanding", "overdue", "paid"], default: "outstanding" },

@@ -20,6 +20,7 @@ const CreateInvoice = async (req, res) => {
       clientId,
       amount,
       dueDate,
+      businessId : business,
       created_at: new Date()
     })
     await triggerInvoiceIntegration(client._id, client.clientEmail, client.clientName, businessUser.company_name, amount, dueDate, businessUser.email)
@@ -38,17 +39,16 @@ const CreateInvoice = async (req, res) => {
 
 const getOutstandingInvoices = async (req, res) => {
   try {
-    const client_id = req.user._id
-    const unpaidInvoices = await invoiceModel.find({ clientId: client_id, status: "outstanding" });
-    let totalOverdueAmount = 0;
-    unpaidInvoices.forEach((invoice) => {
-      totalOverdueAmount += invoice.amount;
+    const business_id = req.user._id
+    const outstandingInvoices = await invoiceModel.find({ businessId: business_id, status: "outstanding" });
+    let totalOutstandingdueAmount = 0;
+    outstandingInvoices.forEach((invoice) => {
+      totalOutstandingdueAmount += invoice.amount;
     });
     return res.status(200).json({
       status: true,
       message: "Outstanding Invoices gotten",
-      data: unpaidInvoices,
-      outstanding: totalOverdueAmount
+      outstanding: totalOutstandingdueAmount
     });
   } catch (error) {
     console.error('Error fetching unpaid invoices:', error);
@@ -61,8 +61,8 @@ const getOutstandingInvoices = async (req, res) => {
 
 const getOverdueInvoicePayment = async (req, res) => {
   try {
-    const client_id = req.user._id
-    const overdueInvoicePayment = await invoiceModel.find({ clientId: client_id, status: "overdue" })
+    const business_id = req.user._id
+    const overdueInvoicePayment = await invoiceModel.find({ businessId: business_id, status: "overdue" })
     let totalOverdueAmount = 0;
     overdueInvoicePayment.forEach((invoice) => {
       totalOverdueAmount += invoice.amount;
@@ -70,7 +70,6 @@ const getOverdueInvoicePayment = async (req, res) => {
     return res.status(200).json({
       status: true,
       message: "Overdue Invoices gotten",
-      data: overdueInvoicePayment,
       overdue: totalOverdueAmount
     });
   } catch (error) {
@@ -84,17 +83,16 @@ const getOverdueInvoicePayment = async (req, res) => {
 
 const getPaidInvoices = async (req, res) => {
   try {
-    const client_id = req.user._id
-    const paidInvoices = await invoiceModel.find({ clientId: client_id, status: "paid" });
-    let totalOverdueAmount = 0;
+    const business_id = req.user._id
+    const paidInvoices = await invoiceModel.find({ businessId: business_id, status: "paid" });
+    let totalPaidAmount = 0;
     paidInvoices.forEach((invoice) => {
-      totalOverdueAmount += invoice.amount;
+      totalPaidAmount += invoice.amount;
     });
     return res.status(200).json({
       status: true,
       message: "Outstanding Invoices gotten",
-      data: paidInvoices,
-      outstanding: totalOverdueAmount
+      paid: totalPaidAmount
     });
   } catch (error) {
     console.error('Error fetching unpaid invoices:', error);
@@ -108,23 +106,63 @@ const getPaidInvoices = async (req, res) => {
 const getAllInvoice = async (req, res) => {
   try {
     const business_id = req.user._id
-    const allInvoices = await invoiceModel.find({
-      clientId: { $elemMatch: { businessId: business_id } }
-    });
-    console.log({ allInvoices })
-    let totalOverdueAmount = 0;
+    const allInvoices = await invoiceModel.find({ businessId : business_id})
+    let totalAmount = 0;
     allInvoices.forEach((invoice) => {
-      totalOverdueAmount += invoice.amount;
+      totalAmount += invoice.amount;
     });
     return res.status(200).json({
       status: true,
       message: "All invoice fund gotten",
-      amount: totalOverdueAmount
+      amount: totalAmount
     })
   } catch (error) {
     return res.status(500).json({
       status: false,
       message: error.message
+    })
+  }
+}
+
+const getAllPaidOutstandingOverdueInvoice = async (req, res) => {
+  try {
+    const business_id = req.user._id
+    // all invoice
+    const allInvoices = await invoiceModel.find({ businessId : business_id})
+    let totalAmount = 0;
+    allInvoices.forEach((invoice) => {
+      totalAmount += invoice.amount;
+    });
+    // outstanding invoice
+    const outstandingInvoices = await invoiceModel.find({ businessId: business_id, status: "outstanding" });
+    let totalOutstandingdueAmount = 0;
+    outstandingInvoices.forEach((invoice) => {
+      totalOutstandingdueAmount += invoice.amount;
+    });
+    console.log({totalOutstandingdueAmount});
+    // overdue invoice
+    const overdueInvoicePayment = await invoiceModel.find({ businessId: business_id, status: "overdue" })
+    let totalOverdueAmount = 0;
+    overdueInvoicePayment.forEach((invoice) => {
+      totalOverdueAmount += invoice.amount;
+    });
+    // paid invoice
+    const paidInvoices = await invoiceModel.find({ businessId: business_id, status: "paid" });
+    let totalPaidAmount = 0;
+    paidInvoices.forEach((invoice) => {
+      totalPaidAmount += invoice.amount;
+    });
+    return res.status(200).json({
+      status : true,
+      allInvoice : totalAmount,
+      outstanding : totalOutstandingdueAmount,
+      overdue : totalOverdueAmount,
+      paid : totalPaidAmount
+    })
+  } catch (error) {
+    return res.status(500).json({
+      status : false,
+      message : error.message
     })
   }
 }
@@ -136,5 +174,6 @@ module.exports = {
   getOutstandingInvoices,
   getOverdueInvoicePayment,
   getPaidInvoices,
-  getAllInvoice
+  getAllInvoice,
+  getAllPaidOutstandingOverdueInvoice
 }

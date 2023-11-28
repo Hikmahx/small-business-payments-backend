@@ -17,7 +17,7 @@ passport.deserializeUser((id, done) => {
 passport.use(
     new GoogleStrategy(
         {
-            callbackURL: "https://altschool-blog-service.onrender.com/views/google/redirect",
+            callbackURL: "https://grp93-frontend.netlify.app/client-login",
             clientID: process.env.CLIENT_ID,
             clientSecret: process.env.CLIENT_SECRET,
         },

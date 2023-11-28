@@ -10,5 +10,7 @@ router.post("/create-client", middleware.validateClientRegistration, middleware.
 router.delete("/delete-client/:clientIdToDelete",controller.deleteClientInformation)
 router.patch("/update-client", controller.editClientInformation)
 router.get("/", globalMiddleware.BearerTokenClient, controller.getClientInformation)
+router.get("/invoice-information", globalMiddleware.BearerTokenClient, controller.getAllPaidOutstandingOverdueInvoice)
+router.get("/get-invoice-customer", globalMiddleware.BearerTokenClient, controller.getAllInvoiceCustomer)
 
 module.exports = router

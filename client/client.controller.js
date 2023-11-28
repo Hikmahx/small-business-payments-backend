@@ -1,5 +1,6 @@
 const clientModel = require("../models/Client.model")
 const businessModel = require("../models/Business.model")
+const invoiceModel = require("../models/Invoice.model")
 const { addSubscriberToNovu, triggerClientRegistration } = require("../utils/novu")
 
 const createClient = async (req, res) => {
@@ -26,8 +27,8 @@ const createClient = async (req, res) => {
             clientPhoneNumber,
             clientEmail,
             notes,
-            username : username,
-            password : password
+            username: username,
+            password: password
         })
         await addSubscriberToNovu(clientDetails._id, clientEmail)
         await triggerClientRegistration(clientDetails._id, clientEmail, foundBusiness.company_name, foundBusiness.email, clientName, username, password)
@@ -81,22 +82,22 @@ const editClientInformation = async (req, res) => {
 const getClientInformation = async (req, res) => {
     try {
         const clientId = req.client._id
-        const clientInfo = await clientModel.findById({_id : clientId})
+        const clientInfo = await clientModel.findById({ _id: clientId })
         if (!clientInfo) {
             return res.status(400).json({
-                status : false,
-                message : "Client not found"
+                status: false,
+                message: "Client not found"
             })
         }
         return res.status(200).json({
-            status : true,
-            message : "Profile found!",
-            data : clientInfo
+            status: true,
+            message: "Profile found!",
+            data: clientInfo
         })
     } catch (error) {
         return res.status(500).json({
-            status : false,
-            message : error.message
+            status: false,
+            message: error.message
         })
     }
 }
@@ -122,10 +123,74 @@ const deleteClientInformation = async (req, res) => {
     }
 };
 
+const getAllPaidOutstandingOverdueInvoice = async (req, res) => {
+    try {
+        const client_id = req.client._id
+        // all invoice
+        const allInvoices = await invoiceModel.find({ clientId: client_id })
+        let totalAmount = 0;
+        allInvoices.forEach((invoice) => {
+            totalAmount += invoice.amount;
+        });
+        // outstanding invoice
+        const outstandingInvoices = await invoiceModel.find({ clientId: client_id, status: "outstanding" });
+        let totalOutstandingdueAmount = 0;
+        outstandingInvoices.forEach((invoice) => {
+            totalOutstandingdueAmount += invoice.amount;
+        });
+        console.log({ totalOutstandingdueAmount });
+        // overdue invoice
+        const overdueInvoicePayment = await invoiceModel.find({ clientId: client_id, status: "overdue" })
+        let totalOverdueAmount = 0;
+        overdueInvoicePayment.forEach((invoice) => {
+            totalOverdueAmount += invoice.amount;
+        });
+        // paid invoice
+        const paidInvoices = await invoiceModel.find({ clientId: client_id, status: "paid" });
+        let totalPaidAmount = 0;
+        paidInvoices.forEach((invoice) => {
+            totalPaidAmount += invoice.amount;
+        });
+        return res.status(200).json({
+            status: true,
+            allInvoice: totalAmount,
+            outstanding: totalOutstandingdueAmount,
+            overdue: totalOverdueAmount,
+            paid: totalPaidAmount
+        })
+    } catch (error) {
+        return res.status(500).json({
+            status: false,
+            message: error.message
+        })
+    }
+}
+
+const getAllInvoiceCustomer = async (req, res) => {
+    try {
+        const client_id = req.client._id
+        const allInvoice = await invoiceModel.find({ clientId : client_id })
+        return res.status(200).json({
+            status : true,
+            message : "Invoice gotten for user",
+            data : allInvoice
+        })
+    } catch (error) {
+        return res.status(500).json({
+            status : false,
+            message : error.message
+        })
+    }
+}
+
+
+
 
 module.exports = {
     createClient,
     editClientInformation,
     deleteClientInformation,
-    getClientInformation
+    getClientInformation,
+    getAllPaidOutstandingOverdueInvoice,
+    getAllInvoiceCustomer
 }

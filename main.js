@@ -7,7 +7,9 @@ const clientRouter = require("./client/client.route")
 const invoiceRouter = require("./invoice/invoice.route")
 const serviceRouter = require("./services/paystack.routers")
 const schedule = require("node-schedule")
+const passport = require("passport")
 const invoiceModel = require("./models/Invoice.model")
+const session = require('express-session');
 const { triggerOverDueInvoiceNotification } = require("./utils/novu");
 const ClientModel = require("./models/Client.model");
 const BusinessOwnerModel = require("./models/Business.model");
@@ -16,6 +18,14 @@ require("dotenv").config()
 
 const app = express();
 app.use(express.json());
+app.use(session({
+  secret : process.env.COOKIEKEY,
+  saveUninitialized: false,
+  resave : false
+}))
+
+app.use(passport.initialize())
+app.use(passport.session())
 
 // CORS
 app.use(cors());

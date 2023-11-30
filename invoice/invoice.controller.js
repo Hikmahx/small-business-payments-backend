@@ -154,6 +154,7 @@ const getAllPaidOutstandingOverdueInvoice = async (req, res) => {
     });
     return res.status(200).json({
       status : true,
+      information : allInvoices,
       allInvoice : totalAmount,
       outstanding : totalOutstandingdueAmount,
       overdue : totalOverdueAmount,

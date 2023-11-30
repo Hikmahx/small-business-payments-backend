@@ -124,49 +124,121 @@ const getAllInvoice = async (req, res) => {
   }
 }
 
+// const getAllPaidOutstandingOverdueInvoice = async (req, res) => {
+//   try {
+//     const business_id = req.user._id
+//     // all invoice
+//     const allInvoices = await invoiceModel.find({ businessId : business_id})
+//     let totalAmount = 0;
+//     allInvoices.forEach((invoice) => {
+//       totalAmount += invoice.amount;
+//     });
+//     // outstanding invoice
+//     const outstandingInvoices = await invoiceModel.find({ businessId: business_id, status: "outstanding" });
+//     let totalOutstandingdueAmount = 0;
+//     outstandingInvoices.forEach((invoice) => {
+//       totalOutstandingdueAmount += invoice.amount;
+//     });
+//     console.log({totalOutstandingdueAmount});
+//     // overdue invoice
+//     const overdueInvoicePayment = await invoiceModel.find({ businessId: business_id, status: "overdue" })
+//     let totalOverdueAmount = 0;
+//     overdueInvoicePayment.forEach((invoice) => {
+//       totalOverdueAmount += invoice.amount;
+//     });
+//     // paid invoice
+//     const paidInvoices = await invoiceModel.find({ businessId: business_id, status: "paid" });
+//     let totalPaidAmount = 0;
+//     paidInvoices.forEach((invoice) => {
+//       totalPaidAmount += invoice.amount;
+//     });
+//     return res.status(200).json({
+//       status : true,
+//       data : allInvoices,
+//       allInvoice : totalAmount,
+//       outstanding : totalOutstandingdueAmount,
+//       overdue : totalOverdueAmount,
+//       paid : totalPaidAmount
+//     })
+//   } catch (error) {
+//     return res.status(500).json({
+//       status : false,
+//       message : error.message
+//     })
+//   }
+// }
+
 const getAllPaidOutstandingOverdueInvoice = async (req, res) => {
   try {
-    const business_id = req.user._id
+    const business_id = req.user._id;
+
+    // Fetch all clients to map client IDs to usernames
+    const allClients = await clientModel.find({ businessOwnerId: business_id });
+    const clientUsernameMap = allClients.reduce((map, client) => {
+      map[client._id] = client.username;
+      return map;
+    }, {});
+
     // all invoice
-    const allInvoices = await invoiceModel.find({ businessId : business_id})
+    const allInvoices = await invoiceModel.find({ businessId: business_id });
+
+    // Map invoices to include client username
+    const invoicesWithUsername = allInvoices.map((invoice) => ({
+      ...invoice.toObject(),
+      username: clientUsernameMap[invoice.clientId] || 'Unknown',
+    }));
+
     let totalAmount = 0;
-    allInvoices.forEach((invoice) => {
+    invoicesWithUsername.forEach((invoice) => {
       totalAmount += invoice.amount;
     });
+
     // outstanding invoice
-    const outstandingInvoices = await invoiceModel.find({ businessId: business_id, status: "outstanding" });
+    const outstandingInvoices = await invoiceModel.find({
+      businessId: business_id,
+      status: 'outstanding',
+    });
     let totalOutstandingdueAmount = 0;
     outstandingInvoices.forEach((invoice) => {
       totalOutstandingdueAmount += invoice.amount;
     });
-    console.log({totalOutstandingdueAmount});
+
     // overdue invoice
-    const overdueInvoicePayment = await invoiceModel.find({ businessId: business_id, status: "overdue" })
+    const overdueInvoicePayment = await invoiceModel.find({
+      businessId: business_id,
+      status: 'overdue',
+    });
     let totalOverdueAmount = 0;
     overdueInvoicePayment.forEach((invoice) => {
       totalOverdueAmount += invoice.amount;
     });
+
     // paid invoice
-    const paidInvoices = await invoiceModel.find({ businessId: business_id, status: "paid" });
+    const paidInvoices = await invoiceModel.find({
+      businessId: business_id,
+      status: 'paid',
+    });
     let totalPaidAmount = 0;
     paidInvoices.forEach((invoice) => {
       totalPaidAmount += invoice.amount;
     });
+
     return res.status(200).json({
-      status : true,
-      data : allInvoices,
-      allInvoice : totalAmount,
-      outstanding : totalOutstandingdueAmount,
-      overdue : totalOverdueAmount,
-      paid : totalPaidAmount
-    })
+      status: true,
+      data: invoicesWithUsername,
+      allInvoice: totalAmount,
+      outstanding: totalOutstandingdueAmount,
+      overdue: totalOverdueAmount,
+      paid: totalPaidAmount,
+    });
   } catch (error) {
     return res.status(500).json({
-      status : false,
-      message : error.message
-    })
+      status: false,
+      message: error.message,
+    });
   }
-}
+};
+
 
 
 

@@ -6,7 +6,7 @@ const service = require("../utils/paystack")
 
 router.get("/initialize/:invoiceId", globalMiddleware.BearerTokenClient, preventDoublePayment, service.initializePayment)
 router.get("/verify-transaction/:reference", service.verifyTransaction)
-router.get('/payment/callback/paystack',async (req, res) => {
+router.get('/payment/callback/paystack', async (req, res) => {
     console.log(req);
     res.send(200);
 })

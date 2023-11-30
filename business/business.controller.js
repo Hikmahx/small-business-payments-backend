@@ -1,5 +1,6 @@
 const businessModel = require("../models/Business.model")
 const clientModel = require("../models/Client.model")
+const InvoiceModel = require("../models/Invoice.model")
 const { addSubscriberToNovu, triggerNotification } = require("../utils/novu")
 
 const createBusiness = async (req, res) => {
@@ -119,6 +120,21 @@ const getAllClientInformation = async (req, res) => {
         const business_client = req.user._id
         // fetches all client created by the business
         const found_business_client = await clientModel.find({ businessOwnerId: business_client })
+        const clientPaymentStatus = await Promise.all(
+            found_business_client.map(async (client) => {
+              const invoices = await InvoiceModel.find({ clientId: client._id });
+              const paymentStatus = invoices.map((invoice) => invoice.status);
+              return {
+                clientId: client._id,
+                clientName: client.clientName,
+                paymentStatus: paymentStatus.includes('overdue')
+                  ? 'overdue'
+                  : paymentStatus.includes('outstanding')
+                  ? 'outstanding'
+                  : 'paid',
+              };
+            })
+          );
         const totalClients = found_business_client.length;
         const totalActiveClients = found_business_client.filter(client => !client.deleted).length;
         if (!business_client) {
@@ -137,7 +153,8 @@ const getAllClientInformation = async (req, res) => {
             status: "success",
             data: found_business_client,
             total_value : totalClients,
-            totalActiveClients : totalActiveClients
+            totalActiveClients : totalActiveClients,
+            clientPaymentStatus: clientPaymentStatus,
         })
     } catch (error) {
         return res.status(422).json({

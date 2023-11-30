@@ -12,13 +12,12 @@ const ValidateCreation = async (req, res, next) => {
             username: 'required|min:6|max:60',
             email: 'required|email',
             password: 'required|string|min:8',
-            company_name: 'required|min:10|max:100',
+            company_name: 'required',
             phone_number: 'required|string|min:10|max:11',
             address: {
                 street: 'required|string',
                 city: 'required|string',
-                state: 'required|string',
-                zip_code: 'required|string'
+                state: 'required|string'
             }
           };
           let validation = new validators(data, rules)

@@ -131,7 +131,9 @@ const getAllClientInformation = async (req, res) => {
                   ? 'overdue'
                   : paymentStatus.includes('outstanding')
                   ? 'outstanding'
-                  : 'paid',
+                  : paymentStatus.includes('paid')
+                  ? 'paid'
+                  : "No invoice created"
               };
             })
           );
